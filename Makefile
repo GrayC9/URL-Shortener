@@ -1,7 +1,7 @@
 .PHONY:
 
 build:
-	go build -o ./url cmd/main/main.go
+	go build -o ./url cmd/url-shortener/main.go
 
 run:
 	./url
