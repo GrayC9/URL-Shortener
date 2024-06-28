@@ -33,28 +33,30 @@ func (r *Router) InitRoutes() {
 
 func (r *Router) getOriginal(w http.ResponseWriter, req *http.Request) {
 	url := &URL{}
-	original := []byte(url.OriginalURL)
-	if err := json.NewDecoder(req.Body).Decode(&original); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&url); err != nil {
 		r.logg.Errorln(err)
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"original": string(original),
-		"short":    "",
+		"original": url.OriginalURL,
 	})
 }
 
 func (r *Router) shortened(w http.ResponseWriter, req *http.Request) {
-	newURL := &URL{}
-	newURL.ShortURL = shortener.MakeShort()
-	if newURL.ShortURL == "" {
+	url := &URL{}
+	if err := json.NewDecoder(req.Body).Decode(&url); err != nil {
+		r.logg.Errorln(err)
+		return
+	}
+	url.ShortURL = shortener.MakeShort()
+	if url.ShortURL == "" {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		r.logg.Errorln("shortened URL is empty")
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"original": newURL.OriginalURL,
-		"short":    newURL.ShortURL,
+		"original": url.OriginalURL,
+		"short":    url.ShortURL,
 	})
 	//http.Redirect(w, req, newURL.OriginalURL, http.StatusFound)
 }
