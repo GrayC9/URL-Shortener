@@ -16,11 +16,11 @@ type Server struct {
 	logg *logrus.Logger
 }
 
-func New() *Server {
+func New(log *logrus.Logger) *Server {
 	return &Server{
 		srv:  &http.Server{},
 		cnf:  config.NewConfig(),
-		logg: logrus.New(),
+		logg: log,
 	}
 }
 

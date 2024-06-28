@@ -16,9 +16,10 @@ import (
 func main() {
 	logg := logrus.New()
 	router := handlers.NewRouter(logg)
+	srv := server.New(logg)
 
 	go func() {
-		if err := server.New().Run(router); err != nil {
+		if err := srv.Run(router); err != nil {
 			logg.Fatalln(err)
 		}
 	}()
@@ -37,7 +38,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.New().Shutdown(ctx); err != nil {
+		if err := srv.Shutdown(ctx); err != nil {
 			logg.Errorln(err)
 			return
 		}
