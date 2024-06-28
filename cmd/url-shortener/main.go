@@ -15,7 +15,7 @@ import (
 
 func main() {
 	logg := logrus.New()
-	router := handlers.NewRouter()
+	router := handlers.NewRouter(logg)
 
 	go func() {
 		if err := server.New().Run(router); err != nil {

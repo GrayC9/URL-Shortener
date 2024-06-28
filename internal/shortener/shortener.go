@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type URL struct {
-	OriginalURL string `json:"original"`
-	ShortURL    string `json:"short"`
-}
-
 func MakeShort() string {
 	rand.Seed(time.Now().UnixNano())
 	alphabet := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
