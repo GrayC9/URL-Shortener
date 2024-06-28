@@ -1,12 +1,25 @@
 package config
 
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
 type Config struct {
-	Addr_Port string // `env:"addr_port"`
-	//DBconfig  string //`env:"DB"`
+	Addr_Port string
+	//DBconfig  string
 }
 
 func NewConfig() *Config {
-	return &Config{
-		Addr_Port: "127.0.0.1:10000",
+	if err := godotenv.Load(); err != nil {
+		return nil
 	}
+	return &Config{
+		Addr_Port: getAddr("addr_port"),
+	}
+}
+
+func getAddr(addr string) string {
+	return os.Getenv(addr)
 }

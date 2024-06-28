@@ -10,14 +10,12 @@ import (
 
 type Server struct {
 	srv *http.Server
-	//router *handlers.Router
 	cnf *config.Config
 }
 
 func New() *Server {
 	return &Server{
 		srv: &http.Server{},
-		//router: handlers.NewRouter(),
 		cnf: config.NewConfig(),
 	}
 }
