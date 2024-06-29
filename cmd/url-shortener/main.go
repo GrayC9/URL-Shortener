@@ -10,12 +10,16 @@ import (
 
 	"github.com/GrayC9/URL-Shortener/internal/handlers"
 	"github.com/GrayC9/URL-Shortener/internal/server"
+	"github.com/GrayC9/URL-Shortener/internal/service"
+	"github.com/GrayC9/URL-Shortener/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	logg := logrus.New()
-	router := handlers.NewRouter(logg)
+	storage := storage.NewStorage(logg)
+	service := service.NewService(storage)
+	router := handlers.NewRouter(service, logg)
 	srv := server.New(logg)
 
 	go func() {

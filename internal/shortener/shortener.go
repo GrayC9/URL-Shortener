@@ -7,10 +7,10 @@ import (
 
 func MakeShort() string {
 	rand.Seed(time.Now().UnixNano())
-	alphabet := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
+	alphabet := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	short := make([]rune, 6)
-	for rn := range short {
-		short[rn] = alphabet[rand.Intn(len(alphabet))]
+	for i := range short {
+		short[i] = alphabet[rand.Intn(len(alphabet))]
 	}
 	return string(short)
 }

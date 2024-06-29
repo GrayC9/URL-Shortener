@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/GrayC9/URL-Shortener/internal/service"
 	"github.com/GrayC9/URL-Shortener/internal/shortener"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -12,11 +13,13 @@ import (
 type Router struct {
 	R    *mux.Router
 	logg *logrus.Logger
+	serv *service.Service
 }
 
-func NewRouter(log *logrus.Logger) *Router {
+func NewRouter(srv *service.Service, log *logrus.Logger) *Router {
 	return &Router{
 		R:    mux.NewRouter(),
+		serv: srv,
 		logg: log,
 	}
 }
@@ -37,8 +40,10 @@ func (r *Router) getOriginal(w http.ResponseWriter, req *http.Request) {
 		r.logg.Errorln(err)
 		return
 	}
+	url.ShortURL = shortener.MakeShort()
+	r.serv.Save(url.ShortURL, url.OriginalURL)
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"original": url.OriginalURL,
+		"short": url.ShortURL,
 	})
 }
 
@@ -48,17 +53,15 @@ func (r *Router) shortened(w http.ResponseWriter, req *http.Request) {
 		r.logg.Errorln(err)
 		return
 	}
-	url.ShortURL = shortener.MakeShort()
-	if url.ShortURL == "" {
+	originalURL := r.serv.Get(url.ShortURL)
+	if originalURL == "" {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		r.logg.Errorln("shortened URL is empty")
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"original": url.OriginalURL,
-		"short":    url.ShortURL,
+		"original": originalURL,
 	})
-	//http.Redirect(w, req, newURL.OriginalURL, http.StatusFound)
+	http.Redirect(w, req, originalURL, http.StatusFound)
 }
 
 func WriteJSON(w http.ResponseWriter, status int, a interface{}) error {
