@@ -11,8 +11,12 @@ import (
 )
 
 func main() {
-	cfg := config.LoadConfig()        // Функция для загрузки конфигурации
-	db := storage.NewDatabase(cfg.DB) // Инициализация базы данных
+	cfg := config.LoadConfig()
+
+	db, err := storage.NewMariaDBStorage(cfg.DB.DSN)
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/shorten", handlers.CreateShortURLHandler(db)).Methods("POST")

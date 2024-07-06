@@ -23,7 +23,7 @@ func LoadConfig() Config {
 			Address: getEnv("SERVER_ADDRESS", ":8080"),
 		},
 		DB: DBConfig{
-			DSN: getEnv("DATABASE", "нужно настроить@/db имя"),
+			DSN: getEnv("DATABASE", "your_user:your_password@tcp(localhost:3306)/url_shortener"),
 		},
 	}
 }

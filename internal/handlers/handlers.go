@@ -11,7 +11,11 @@ import (
 func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var url shortener.URL
-		_ = json.NewDecoder(r.Body).Decode(&url)
+		err := json.NewDecoder(r.Body).Decode(&url)
+		if err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
 
 		url.ShortCode = shortener.GenerateShortCode()
 		db.SaveURL(url.ShortCode, url.OriginalURL)
