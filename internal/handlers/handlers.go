@@ -43,7 +43,8 @@ func (r *Router) getOriginal(w http.ResponseWriter, req *http.Request) {
 	url.ShortURL = shortener.MakeShort()
 	r.serv.Save(url.ShortURL, url.OriginalURL)
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"short": url.ShortURL,
+		"original": url.OriginalURL,
+		"short":    url.ShortURL,
 	})
 }
 
@@ -59,9 +60,9 @@ func (r *Router) shortened(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"original": originalURL,
+		"short": url.ShortURL,
 	})
-	http.Redirect(w, req, originalURL, http.StatusFound)
+	//http.Redirect(w, req, originalURL, http.StatusFound)
 }
 
 func WriteJSON(w http.ResponseWriter, status int, a interface{}) error {

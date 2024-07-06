@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/GrayC9/URL-Shortener/internal/config"
 	"github.com/GrayC9/URL-Shortener/internal/handlers"
 	"github.com/GrayC9/URL-Shortener/internal/server"
 	"github.com/GrayC9/URL-Shortener/internal/service"
@@ -17,10 +18,11 @@ import (
 
 func main() {
 	logg := logrus.New()
-	storage := storage.NewStorage(logg)
+	cnf := config.NewConfig()
+	storage := storage.DB(logg, cnf)
 	service := service.NewService(storage)
 	router := handlers.NewRouter(service, logg)
-	srv := server.New(logg)
+	srv := server.New(logg, cnf)
 
 	go func() {
 		if err := srv.Run(router); err != nil {

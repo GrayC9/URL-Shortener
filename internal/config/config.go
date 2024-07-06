@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	Addr_Port string
-	//DBconfig  string
+	DBconfig  string
 }
 
 func NewConfig() *Config {
@@ -17,6 +17,7 @@ func NewConfig() *Config {
 	}
 	return &Config{
 		Addr_Port: getAddr("addr_port"),
+		DBconfig:  getAddr("DBconfig"),
 	}
 }
 

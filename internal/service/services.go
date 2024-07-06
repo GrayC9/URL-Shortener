@@ -11,7 +11,7 @@ type Service struct {
 	DBManage
 }
 
-func NewService(storage *storage.Storage) *Service {
+func NewService(storage *storage.MaridDB) *Service {
 	return &Service{
 		DBManage: storage,
 	}

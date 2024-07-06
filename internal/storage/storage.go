@@ -1,37 +1,51 @@
 package storage
 
 import (
-	"sync"
+	"context"
+	"time"
 
+	"github.com/GrayC9/URL-Shortener/internal/config"
+	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 )
 
-type Storage struct {
-	urls  map[string]string
-	mutex sync.RWMutex
-	logg  *logrus.Logger
+type MaridDB struct {
+	DB   *sqlx.DB
+	logg *logrus.Logger
+	conf *config.Config
 }
 
-func NewStorage(log *logrus.Logger) *Storage {
-	return &Storage{
-		urls: make(map[string]string),
-		logg: log,
+func DB(logger *logrus.Logger, cnf *config.Config) *MaridDB {
+	return &MaridDB{
+		logg: logger,
+		conf: cnf,
 	}
 }
 
-func (s *Storage) Save(short, original string) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-	s.urls[short] = original
+func (db *MaridDB) connect() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	d, err := sqlx.ConnectContext(ctx, "mariadb", db.conf.DBconfig)
+	if err != nil {
+		db.logg.Errorln(err)
+		return err
+	}
+	if err := d.DB.Ping(); err != nil {
+		db.logg.Errorln(err)
+		return err
+	}
+	db.DB = d
+	db.logg.Infoln("DB configurate")
+
+	return nil
 }
 
-func (s *Storage) Get(short string) string {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+func (db *MaridDB) Save(short, original string) {
 
-	if url, ok := s.urls[short]; ok {
-		return url
-	}
-	s.logg.Errorln("No such shortcode in storage")
+}
+
+func (db *MaridDB) Get(short string) string {
+
+	db.logg.Errorln("No such shortcode in storage")
 	return ""
 }
