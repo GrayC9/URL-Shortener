@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"net/http"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
+
+	"github.com/gorilla/mux"
 )
 
 func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
@@ -17,8 +18,17 @@ func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 			return
 		}
 
-		url.ShortCode = shortener.GenerateShortCode()
-		db.SaveURL(url.ShortCode, url.OriginalURL)
+		shortCode, err := db.GetShortCode(url.OriginalURL)
+		if err == nil {
+			url.ShortCode = shortCode
+		} else {
+			url.ShortCode = shortener.GenerateShortCode()
+			err = db.SaveURL(url.ShortCode, url.OriginalURL)
+			if err != nil {
+				http.Error(w, "ERorr to save url", http.StatusInternalServerError)
+				return
+			}
+		}
 
 		json.NewEncoder(w).Encode(url)
 	}

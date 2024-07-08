@@ -1,0 +1,2 @@
+# Поднятие базы данных
+docker run --detach --name url-mariadb --env MARIADB_ROOT_PASSWORD= -p 0.0.0.0:3306:3306 mariadb:latest
