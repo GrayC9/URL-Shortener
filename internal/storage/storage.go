@@ -9,7 +9,7 @@ import (
 type Storage interface {
 	SaveURL(shortCode, originalURL string) error
 	GetURL(shortCode string) (string, error)
-	GetShortCode(originalURL string) (string, error) // Новый метод
+	GetShortCode(originalURL string) (string, error)
 }
 
 type MariaDBStorage struct {
@@ -46,7 +46,7 @@ func (s *MariaDBStorage) GetURL(shortCode string) (string, error) {
 	return originalURL, nil
 }
 
-func (s *MariaDBStorage) GetShortCode(originalURL string) (string, error) { // Реализация нового метода
+func (s *MariaDBStorage) GetShortCode(originalURL string) (string, error) {
 	var shortCode string
 	err := s.db.QueryRow("SELECT short_code FROM urls WHERE original_url = ?", originalURL).Scan(&shortCode)
 	if err != nil {
