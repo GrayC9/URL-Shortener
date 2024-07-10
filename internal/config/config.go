@@ -20,10 +20,10 @@ type DBConfig struct {
 func LoadConfig() Config {
 	return Config{
 		Server: ServerConfig{
-			Address: getEnv("SERVER_ADDRESS", ":10000"),
+			Address: getEnv("SERVER_ADDRESS", ":10100"),
 		},
 		DB: DBConfig{
-			DSN: getEnv("DB_DSN", "root:jbfjkerbg12A21@tcp(r1.gl.fconn.ru:3306)/urlsh"),
+			DSN: getEnv("DB_DSN", ""),
 		},
 	}
 }
