@@ -4,24 +4,21 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"url_shortener/internal/config"
 	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
 	cfg := config.LoadConfig()
 
-	r := mux.NewRouter()
 	db, err := storage.NewMariaDBStorage(cfg.DB.DSN)
 	if err != nil {
-		r.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
-			handlers.WriteJSON(w, r, http.StatusInternalServerError, err.Error())
-		})
+		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 
+	r := mux.NewRouter()
 	r.HandleFunc("/shorten", handlers.CreateShortURLHandler(db)).Methods("POST")
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
 

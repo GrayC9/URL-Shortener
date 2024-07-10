@@ -48,9 +48,3 @@ func RedirectHandler(db storage.Storage) http.HandlerFunc {
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
 }
-
-func WriteJSON(w http.ResponseWriter, r *http.Request, status int, a interface{}) error {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(a)
-}
