@@ -23,7 +23,7 @@ func LoadConfig() Config {
 			Address: getEnv("SERVER_ADDRESS", ":10000"),
 		},
 		DB: DBConfig{
-			DSN: getEnv("DB_DSN", "root:jbfjkerbg12A21@tcp(r1.gl.fconn.ru:3306)/urlsh"),
+			DSN: getEnv("DB_DSN", ""),
 		},
 	}
 }
