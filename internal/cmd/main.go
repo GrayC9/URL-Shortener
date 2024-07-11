@@ -19,8 +19,11 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./internal/web"))))
 	r.HandleFunc("/shorten", handlers.CreateShortURLHandler(db)).Methods("POST")
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
+	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
 
 	log.Fatal(http.ListenAndServe(cfg.Server.Address, r))
 }
