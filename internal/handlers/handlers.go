@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -87,4 +88,10 @@ func WebInterfaceHandler(db storage.Storage) http.HandlerFunc {
 			log.Printf("Error executing template: %v", err)
 		}
 	}
+}
+
+func WriteJSON(w http.ResponseWriter, r *http.Request, status int, a interface{}) error {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(a)
 }
