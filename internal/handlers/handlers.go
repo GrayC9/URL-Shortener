@@ -66,6 +66,12 @@ func RedirectHandler(db storage.Storage) http.HandlerFunc {
 			return
 		}
 
+		err = db.UpdateLastAccessed(shortCode)
+		if err != nil {
+			http.Error(w, "Error updating last accessed time", http.StatusInternalServerError)
+			return
+		}
+
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
 }
