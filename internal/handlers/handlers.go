@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
@@ -41,7 +42,10 @@ func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 			ShortURL:    r.Host + "/" + url.ShortCode,
 		}
 
-		tmpl.Execute(w, data)
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			log.Printf("Error executing template: %v", err)
+		}
 	}
 }
 
@@ -56,6 +60,12 @@ func RedirectHandler(db storage.Storage) http.HandlerFunc {
 			return
 		}
 
+		err = db.IncrementClickCount(shortCode)
+		if err != nil {
+			http.Error(w, "Error updating click count", http.StatusInternalServerError)
+			return
+		}
+
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
 }
@@ -66,6 +76,9 @@ func WebInterfaceHandler(db storage.Storage) http.HandlerFunc {
 			CreateShortURLHandler(db)(w, r)
 			return
 		}
-		tmpl.Execute(w, PageData{})
+		err := tmpl.Execute(w, PageData{})
+		if err != nil {
+			log.Printf("Error executing template: %v", err)
+		}
 	}
 }

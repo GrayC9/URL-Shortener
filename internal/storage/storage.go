@@ -10,6 +10,7 @@ type Storage interface {
 	SaveURL(shortCode, originalURL string) error
 	GetURL(shortCode string) (string, error)
 	GetShortCode(originalURL string) (string, error)
+	IncrementClickCount(shortCode string) error
 }
 
 type MariaDBStorage struct {
@@ -56,4 +57,9 @@ func (s *MariaDBStorage) GetShortCode(originalURL string) (string, error) {
 		return "", err
 	}
 	return shortCode, nil
+}
+
+func (s *MariaDBStorage) IncrementClickCount(shortCode string) error {
+	_, err := s.db.Exec("UPDATE urls SET click_count = click_count + 1 WHERE short_code = ?", shortCode)
+	return err
 }
