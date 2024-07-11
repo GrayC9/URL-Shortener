@@ -6,8 +6,9 @@ import (
 )
 
 type URL struct {
-	OriginalURL string `json:"original_url"`
-	ShortCode   string `json:"short_url"`
+	OriginalURL    string    `json:"original_url"`
+	ShortCode      string    `json:"short_code"`
+	LastAccessedAt time.Time `json:"last_accessed_at"`
 }
 
 func GenerateShortCode() string {
