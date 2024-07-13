@@ -16,7 +16,10 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build the Docker image
       run: docker build . --file deploy/Dockerfile --tag grayc9/shortener:$(date +%s)
-    - name: docker login
-      run: echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
     - name: docker push
       run: docker push grayc9/shortener:$(date +%s)
