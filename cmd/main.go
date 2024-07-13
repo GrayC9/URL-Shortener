@@ -28,7 +28,6 @@ func main() {
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
 
-	// Пример использования middleware.AuthMiddleware
 	r.Use(auth.AuthMiddleware)
 
 	log.Fatal(http.ListenAndServe(cfg.Server.Address, r))
