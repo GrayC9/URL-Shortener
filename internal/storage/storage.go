@@ -2,7 +2,6 @@ package storage
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -26,48 +25,38 @@ func NewMariaDBStorage(dsn string) (*MariaDBStorage, error) {
 		return nil, err
 	}
 
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
-
 	return &MariaDBStorage{db: db}, nil
 }
 
-func (s *MariaDBStorage) SaveURL(shortCode, originalURL string) error {
-	_, err := s.db.Exec("INSERT INTO urls (short_code, original_url) VALUES (?, ?)", shortCode, originalURL)
+func (m *MariaDBStorage) SaveURL(shortCode, originalURL string) error {
+	_, err := m.db.Exec("INSERT INTO urls (short_code, original_url) VALUES (?, ?)", shortCode, originalURL)
 	return err
 }
 
-func (s *MariaDBStorage) GetURL(shortCode string) (string, error) {
+func (m *MariaDBStorage) GetURL(shortCode string) (string, error) {
 	var originalURL string
-	err := s.db.QueryRow("SELECT original_url FROM urls WHERE short_code = ?", shortCode).Scan(&originalURL)
+	err := m.db.QueryRow("SELECT original_url FROM urls WHERE short_code = ?", shortCode).Scan(&originalURL)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", errors.New("url not found")
-		}
 		return "", err
 	}
 	return originalURL, nil
 }
 
-func (s *MariaDBStorage) GetShortCode(originalURL string) (string, error) {
+func (m *MariaDBStorage) GetShortCode(originalURL string) (string, error) {
 	var shortCode string
-	err := s.db.QueryRow("SELECT short_code FROM urls WHERE original_url = ?", originalURL).Scan(&shortCode)
+	err := m.db.QueryRow("SELECT short_code FROM urls WHERE original_url = ?", originalURL).Scan(&shortCode)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", errors.New("short url not found")
-		}
 		return "", err
 	}
 	return shortCode, nil
 }
 
-func (s *MariaDBStorage) IncrementClickCount(shortCode string) error {
-	_, err := s.db.Exec("UPDATE urls SET click_count = click_count + 1 WHERE short_code = ?", shortCode)
+func (m *MariaDBStorage) IncrementClickCount(shortCode string) error {
+	_, err := m.db.Exec("UPDATE urls SET click_count = click_count + 1 WHERE short_code = ?", shortCode)
 	return err
 }
 
-func (s *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
-	_, err := s.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now(), shortCode)
+func (m *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
+	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now())
 	return err
 }
