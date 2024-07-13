@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  TAG: $(date +%s)
-
 jobs:
 
   build:
@@ -17,6 +14,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: setup env
+      run: |
+        fdate=$(date +%s)
+        echo "TAG=$fdate" >> $GITHUB_ENV
     - name: Build the Docker image
       run: docker build . --file deploy/Dockerfile --tag grayc9/shortener:${{ env.TAG }}
     - name: Login to Docker Hub
