@@ -1,60 +1,73 @@
 package storage
 
 import (
+	"database/sql"
 	"errors"
-	"sync"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var ErrNotFound = errors.New("not found")
-
-type MemoryStorage struct {
-	mu     sync.RWMutex
-	urls   map[string]string
-	clicks map[string]int
+type Storage interface {
+	SaveURL(shortCode, originalURL string) error
+	GetURL(shortCode string) (string, error)
+	GetShortCode(originalURL string) (string, error)
+	IncrementClickCount(shortCode string) error
+	UpdateLastAccessed(shortCode string) error
 }
 
-func NewMemoryStorage() *MemoryStorage {
-	return &MemoryStorage{
-		urls:   make(map[string]string),
-		clicks: make(map[string]int),
+type MariaDBStorage struct {
+	db *sql.DB
+}
+
+func NewMariaDBStorage(dsn string) (*MariaDBStorage, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
 	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return &MariaDBStorage{db: db}, nil
 }
 
-func (m *MemoryStorage) GetShortCode(originalURL string) (string, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	for k, v := range m.urls {
-		if v == originalURL {
-			return k, nil
+func (s *MariaDBStorage) SaveURL(shortCode, originalURL string) error {
+	_, err := s.db.Exec("INSERT INTO urls (short_code, original_url) VALUES (?, ?)", shortCode, originalURL)
+	return err
+}
+
+func (s *MariaDBStorage) GetURL(shortCode string) (string, error) {
+	var originalURL string
+	err := s.db.QueryRow("SELECT original_url FROM urls WHERE short_code = ?", shortCode).Scan(&originalURL)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", errors.New("url not found")
 		}
+		return "", err
 	}
-	return "", ErrNotFound
+	return originalURL, nil
 }
 
-func (m *MemoryStorage) SaveURL(shortCode, originalURL string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.urls[shortCode] = originalURL
-	return nil
-}
-
-func (m *MemoryStorage) GetURL(shortCode string) (string, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	url, ok := m.urls[shortCode]
-	if !ok {
-		return "", ErrNotFound
+func (s *MariaDBStorage) GetShortCode(originalURL string) (string, error) {
+	var shortCode string
+	err := s.db.QueryRow("SELECT short_code FROM urls WHERE original_url = ?", originalURL).Scan(&shortCode)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", errors.New("short url not found")
+		}
+		return "", err
 	}
-	return url, nil
+	return shortCode, nil
 }
 
-func (m *MemoryStorage) IncrementClickCount(shortCode string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.clicks[shortCode]++
-	return nil
+func (s *MariaDBStorage) IncrementClickCount(shortCode string) error {
+	_, err := s.db.Exec("UPDATE urls SET click_count = click_count + 1 WHERE short_code = ?", shortCode)
+	return err
 }
 
-func (m *MemoryStorage) UpdateLastAccessed(shortCode string) error {
-	return nil
+func (s *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
+	_, err := s.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now(), shortCode)
+	return err
 }
