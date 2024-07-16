@@ -6,7 +6,6 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Storage interface {
@@ -65,7 +64,10 @@ func (m *MariaDBStorage) IncrementClickCount(shortCode string) error {
 
 func (m *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
 	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now())
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *MariaDBStorage) CreateUser(name, hash_password string) (int, error) {
@@ -80,19 +82,14 @@ func (m *MariaDBStorage) CreateUser(name, hash_password string) (int, error) {
 }
 
 func (m *MariaDBStorage) EnterUser(name, pass string) (int, error) {
-	query := "SELECT username, hash_password FROM users WHERE username = ? AND hash_password = ? RETURNING id"
+	query := "SELECT id FROM users WHERE username = ? AND hash_password = ? RETURNING id"
 	var id int
-	var username, hash string
-	err := m.db.QueryRow(query, name, pass).Scan(&id, &username, &hash)
+	err := m.db.QueryRow(query, name, pass).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, errors.New("no such user")
 		}
 		return 0, err
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass)); err != nil {
-		return 0, err
-	}
-
 	return id, nil
 }

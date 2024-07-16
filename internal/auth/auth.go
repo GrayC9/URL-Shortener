@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,21 +20,17 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-type userInput struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 func SignUp(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var input userInput
-
-		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		id, err := db.CreateUser(input.Username, Hashing(input.Password))
+		username := r.FormValue("username")
+		password := r.FormValue("hash_password")
+
+		id, err := db.CreateUser(username, Hashing(password))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -49,14 +44,15 @@ func SignUp(db storage.Storage) http.HandlerFunc {
 
 func Login(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var input userInput
-
-		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		id, err := db.EnterUser(input.Username, input.Password)
+		username := r.FormValue("username")
+		password := r.FormValue("hash_password")
+
+		id, err := db.EnterUser(username, password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
