@@ -4,11 +4,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"url_shortener/internal/auth"
 	"url_shortener/internal/config"
 	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -24,11 +25,11 @@ func main() {
 	}
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./internal/web"))))
-	r.HandleFunc("/shorten", handlers.CreateShortURLHandler(db)).Methods("POST")
+	r.HandleFunc("/api/shorten", handlers.CreateShortURLHandler(db)).Methods("POST")
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
-
-	r.Use(auth.AuthMiddleware)
+	r.HandleFunc("/register", auth.SignUp(db)).Methods("POST")
+	r.HandleFunc("/login", auth.AuthMiddleware(auth.Login(db))).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(cfg.Server.Address, r))
 }

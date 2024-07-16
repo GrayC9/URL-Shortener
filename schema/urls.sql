@@ -9,3 +9,10 @@ CREATE TABLE urls (
                       click_count INT DEFAULT 0,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE users (
+                      id INT AUTO_INCREMENT PRIMARY KEY,
+                      username VARCHAR(255) NOT NULL,
+                      hash_password VARCHAR(255) NOT NULL,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);  

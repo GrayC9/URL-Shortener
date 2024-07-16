@@ -2,12 +2,16 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
+	"url_shortener/internal/handlers"
+	"url_shortener/internal/storage"
 
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var JWTSecretKey []byte
@@ -15,6 +19,59 @@ var JWTSecretKey []byte
 type Claims struct {
 	UserID int `json:"user_id"`
 	jwt.StandardClaims
+}
+
+type userInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func SignUp(db storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var input userInput
+
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		id, err := db.CreateUser(input.Username, Hashing(input.Password))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
+			"id": id,
+		})
+	}
+}
+
+func Login(db storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var input userInput
+
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		id, err := db.EnterUser(input.Username, input.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		token, err := GenerateToken(id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
+			"token": token,
+		})
+	}
 }
 
 func GenerateToken(userID int) (string, error) {
@@ -50,7 +107,7 @@ func ParseToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
@@ -76,4 +133,12 @@ func GetContextUserID(r *http.Request) (int, error) {
 		return 0, errors.New("user ID not found in context")
 	}
 	return userID, nil
+}
+
+func Hashing(password string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return ""
+	}
+	return string(hash)
 }
