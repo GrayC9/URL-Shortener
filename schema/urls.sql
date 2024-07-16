@@ -2,6 +2,7 @@ CREATE DATABASE IF NOT EXISTS urlsh;
 USE urlsh;
 ALTER TABLE urls ADD COLUMN click_count INT DEFAULT 0;
 ALTER TABLE urls ADD COLUMN last_accessed_at TIMESTAMP NULL;
+ALTER TABLE urls DROP COLUMN last_accessed_at;
 CREATE TABLE urls (
                       id INT AUTO_INCREMENT PRIMARY KEY,
                       short_code VARCHAR(255) NOT NULL,
@@ -17,3 +18,5 @@ CREATE TABLE users (
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );  
 DROP TABLE users;
+
+SELECT * FROM users;

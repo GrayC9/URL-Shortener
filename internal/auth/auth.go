@@ -20,6 +20,18 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+func SetCookie(w http.ResponseWriter, token string) {
+	cookie := &http.Cookie{
+		Name:     "jwt",
+		Value:    token,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
+		Expires:  time.Now().Add(time.Hour),
+	}
+	http.SetCookie(w, cookie)
+}
+
 func SignUp(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
@@ -64,6 +76,8 @@ func Login(db storage.Storage) http.HandlerFunc {
 			return
 		}
 
+		SetCookie(w, token)
+
 		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
 			"token": token,
 		})
@@ -105,21 +119,23 @@ func ParseToken(tokenString string) (*Claims, error) {
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("Authorization")
+		cookie, err := r.Cookie("jwt")
+		if err != nil {
+			return
+		}
+
+		tokenString := cookie.Value
 		if tokenString == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-
 		claims, err := ParseToken(tokenString)
 		if err != nil {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-
 		r = r.WithContext(context.WithValue(r.Context(), "userID", claims.UserID))
-
-		next.ServeHTTP(w, r)
+		next(w, r)
 	})
 }
 

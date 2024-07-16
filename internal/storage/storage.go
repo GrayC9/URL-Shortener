@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Storage interface {
@@ -64,14 +65,11 @@ func (m *MariaDBStorage) IncrementClickCount(shortCode string) error {
 
 func (m *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
 	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now())
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (m *MariaDBStorage) CreateUser(name, hash_password string) (int, error) {
-	query := "INSERT INTO users (username, hash_password, created_at) VALUES (?, ?, ?) RETURNING id"
+	query := "INSERT INTO users (username, hash_password, created_at) VALUES (?, ?, ?)"
 	var id int
 	tm := time.Now()
 	if err := m.db.QueryRow(query, name, hash_password, tm.Format(time.DateTime)).Scan(&id); err != nil {
@@ -82,13 +80,17 @@ func (m *MariaDBStorage) CreateUser(name, hash_password string) (int, error) {
 }
 
 func (m *MariaDBStorage) EnterUser(name, pass string) (int, error) {
-	query := "SELECT id FROM users WHERE username = ? AND hash_password = ? RETURNING id"
+	query := "SELECT id, hash_password FROM users WHERE username = ?"
 	var id int
-	err := m.db.QueryRow(query, name, pass).Scan(&id)
+	var hash string
+	err := m.db.QueryRow(query, name).Scan(&id, &hash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, errors.New("no such user")
 		}
+		return 0, err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass)); err != nil {
 		return 0, err
 	}
 	return id, nil

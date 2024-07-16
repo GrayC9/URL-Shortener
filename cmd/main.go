@@ -29,7 +29,12 @@ func main() {
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
 	r.HandleFunc("/register", auth.SignUp(db)).Methods("POST")
-	r.HandleFunc("/login", auth.AuthMiddleware(auth.Login(db))).Methods("POST")
+
+	//subrouter := r.HandleFunc("/login", auth.Login(db)).Subrouter()
+	//subrouter.Use(auth.AuthMiddleware)
+	//subrouter.Methods("POST")
+
+	r.HandleFunc("/login", auth.AuthMiddleware((auth.Login(db)))).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(cfg.Server.Address, r))
 }
