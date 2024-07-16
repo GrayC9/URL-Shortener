@@ -1,17 +1,16 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"url_shortener/internal/auth"
 
 	"url_shortener/internal/config"
 	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -31,7 +30,6 @@ func main() {
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
 	r.HandleFunc("/register", auth.SignUp(db)).Methods("POST")
-
 	//subrouter := r.HandleFunc("/login", auth.Login(db)).Subrouter()
 	//subrouter.Use(auth.AuthMiddleware)
 	//subrouter.Methods("POST")
