@@ -1,10 +1,12 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 
 	"url_shortener/internal/auth"
+
 	"url_shortener/internal/config"
 	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
