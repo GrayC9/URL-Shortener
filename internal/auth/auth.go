@@ -24,7 +24,7 @@ func SetCookie(w http.ResponseWriter, token string) {
 	cookie := &http.Cookie{
 		Name:     "jwt",
 		Value:    token,
-		Path:     "/",
+		Path:     "/login",
 		Secure:   true,
 		HttpOnly: true,
 		Expires:  time.Now().Add(time.Hour),
@@ -42,15 +42,13 @@ func SignUp(db storage.Storage) http.HandlerFunc {
 		username := r.FormValue("username")
 		password := r.FormValue("hash_password")
 
-		id, err := db.CreateUser(username, Hashing(password))
+		err := db.CreateUser(username, Hashing(password))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
-			"id": id,
-		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
