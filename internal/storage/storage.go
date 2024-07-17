@@ -15,7 +15,7 @@ type Storage interface {
 	GetShortCode(originalURL string) (string, error)
 	IncrementClickCount(shortCode string) error
 	UpdateLastAccessed(shortCode string) error
-	CreateUser(string, string) (int, error)
+	CreateUser(string, string) error
 	EnterUser(string, string) (int, error)
 }
 
@@ -64,19 +64,18 @@ func (m *MariaDBStorage) IncrementClickCount(shortCode string) error {
 }
 
 func (m *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
-	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now())
+	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now(), shortCode)
 	return err
 }
 
-func (m *MariaDBStorage) CreateUser(name, hash_password string) (int, error) {
+func (m *MariaDBStorage) CreateUser(name, hash_password string) error {
 	query := "INSERT INTO users (username, hash_password, created_at) VALUES (?, ?, ?)"
-	var id int
 	tm := time.Now()
-	if err := m.db.QueryRow(query, name, hash_password, tm.Format(time.DateTime)).Scan(&id); err != nil {
-		return 0, err
+	_, err := m.db.Exec(query, name, hash_password, tm.Format(time.DateTime))
+	if err != nil {
+		return err
 	}
-
-	return id, nil
+	return nil
 }
 
 func (m *MariaDBStorage) EnterUser(name, pass string) (int, error) {

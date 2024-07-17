@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
 
 	"github.com/dgrijalva/jwt-go"
@@ -24,8 +23,8 @@ func SetCookie(w http.ResponseWriter, token string) {
 	cookie := &http.Cookie{
 		Name:     "jwt",
 		Value:    token,
-		Path:     "/",
-		Secure:   true,
+		Domain:   "/",
+		Secure:   false,
 		HttpOnly: true,
 		Expires:  time.Now().Add(time.Hour),
 	}
@@ -42,15 +41,13 @@ func SignUp(db storage.Storage) http.HandlerFunc {
 		username := r.FormValue("username")
 		password := r.FormValue("hash_password")
 
-		id, err := db.CreateUser(username, Hashing(password))
+		err := db.CreateUser(username, Hashing(password))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
-			"id": id,
-		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -77,10 +74,6 @@ func Login(db storage.Storage) http.HandlerFunc {
 		}
 
 		SetCookie(w, token)
-
-		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
-			"token": token,
-		})
 	}
 }
 
@@ -121,6 +114,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
