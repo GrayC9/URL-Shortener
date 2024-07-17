@@ -12,7 +12,17 @@
     {{if .Error}}
     <div class="error">{{.Error}}</div>
     {{end}}
-    <form method="POST" action="/">
+    <form method="POST" action="/login">
+        <input type="text" name="username" placeholder="username" required>
+        <input type="password" name="password" placeholder="password" required>
+        <button type="submit">Login</button>
+    </form>
+    <form method="POST" action="/register">
+        <input type="text" name="username" placeholder="username" required>
+        <input type="password" name="password" placeholder="password" required>
+        <button type="submit">Register</button>
+    </form>
+    <form method="POST" action="/api/shorten">
         <input type="text" name="original_url" placeholder="Enter original URL" required>
         <button type="submit">Shorten</button>
     </form>
