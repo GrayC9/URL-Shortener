@@ -64,7 +64,7 @@ func (m *MariaDBStorage) IncrementClickCount(shortCode string) error {
 }
 
 func (m *MariaDBStorage) UpdateLastAccessed(shortCode string) error {
-	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now())
+	_, err := m.db.Exec("UPDATE urls SET last_accessed_at = ? WHERE short_code = ?", time.Now(), shortCode)
 	return err
 }
 
