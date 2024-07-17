@@ -95,3 +95,5 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, status int, a interface{}
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(a)
 }
+
+//www

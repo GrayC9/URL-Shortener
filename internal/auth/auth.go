@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
 
 	"github.com/dgrijalva/jwt-go"
@@ -24,8 +23,8 @@ func SetCookie(w http.ResponseWriter, token string) {
 	cookie := &http.Cookie{
 		Name:     "jwt",
 		Value:    token,
-		Path:     "/login",
-		Secure:   true,
+		Domain:   "/",
+		Secure:   false,
 		HttpOnly: true,
 		Expires:  time.Now().Add(time.Hour),
 	}
@@ -75,10 +74,6 @@ func Login(db storage.Storage) http.HandlerFunc {
 		}
 
 		SetCookie(w, token)
-
-		handlers.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
-			"token": token,
-		})
 	}
 }
 
