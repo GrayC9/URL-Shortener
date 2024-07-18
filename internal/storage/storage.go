@@ -23,31 +23,22 @@ type MariaDBStorage struct {
 	db *sql.DB
 }
 
-func NewMariaDBStorage(dsn string) (*MariaDBStorage, error) {
-	db, err := sql.Open("mysql", dsn)
+func NewMariaDBStorage(config string) (*MariaDBStorage, error) {
+	db, err := sql.Open("mysql", config)
 	if err != nil {
 		return nil, err
 	}
+	const attemps = 5
 
-	if db, err = Ping(db, dsn); err != nil {
-		return nil, err
-	}
-
-	return &MariaDBStorage{db: db}, nil
-}
-
-func Ping(db *sql.DB, config string) (*sql.DB, error) {
-	if config == "" {
-		return nil, errors.New("config is empty")
-	}
-
-	for i := 0; i < 5; i++ {
+	for i := 0; i < attemps; i++ {
 		if err := db.Ping(); err == nil {
-			break
+			return &MariaDBStorage{db: db}, nil
+		}
+		if i < attemps-1 {
+			time.Sleep(time.Second)
 		}
 	}
-
-	return db, nil
+	return nil, errors.New("Failed to connect to database")
 }
 
 func (m *MariaDBStorage) SaveURL(shortCode, originalURL string) error {
