@@ -28,17 +28,22 @@ func NewMariaDBStorage(config string) (*MariaDBStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	const attemps = 5
-
-	for i := 0; i < attemps; i++ {
-		if err := db.Ping(); err == nil {
-			return &MariaDBStorage{db: db}, nil
-		}
-		if i < attemps-1 {
-			time.Sleep(time.Second)
-		}
+	if err := RetryPing(db); err != nil {
+		return nil, err
 	}
-	return nil, errors.New("Failed to connect to database")
+
+	return &MariaDBStorage{db: db}, nil
+}
+
+func RetryPing(db *sql.DB) error {
+	var err error
+	for i := 0; i < 5; i++ {
+		if err = db.Ping(); err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	return err
 }
 
 func (m *MariaDBStorage) SaveURL(shortCode, originalURL string) error {
