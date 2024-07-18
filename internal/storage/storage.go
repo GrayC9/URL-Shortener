@@ -29,7 +29,25 @@ func NewMariaDBStorage(dsn string) (*MariaDBStorage, error) {
 		return nil, err
 	}
 
+	if db, err = Ping(db, dsn); err != nil {
+		return nil, err
+	}
+
 	return &MariaDBStorage{db: db}, nil
+}
+
+func Ping(db *sql.DB, config string) (*sql.DB, error) {
+	if config == "" {
+		return nil, errors.New("config is empty")
+	}
+
+	for i := 0; i < 5; i++ {
+		if err := db.Ping(); err == nil {
+			break
+		}
+	}
+
+	return db, nil
 }
 
 func (m *MariaDBStorage) SaveURL(shortCode, originalURL string) error {
