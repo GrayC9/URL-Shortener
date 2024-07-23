@@ -1,3 +1,4 @@
+// main.go
 package main
 
 import (
@@ -7,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"url_shortener/internal/auth"
-
+	"url_shortener/internal/cache"
 	"url_shortener/internal/config"
 	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
@@ -25,9 +26,11 @@ func main() {
 		})
 	}
 
+	urlCache := cache.NewURLCache()
+
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./internal/web"))))
-	r.HandleFunc("/api/shorten", handlers.CreateShortURLHandler(db)).Methods("POST")
-	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db)).Methods("GET")
+	r.HandleFunc("/api/shorten", handlers.CreateShortURLHandler(db, urlCache)).Methods("POST")
+	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db, urlCache)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
 	r.HandleFunc("/register", auth.SignUp(db)).Methods("POST")
 	r.HandleFunc("/login", auth.AuthMiddleware((auth.Login(db)))).Methods("POST")

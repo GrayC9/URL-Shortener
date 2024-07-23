@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"url_shortener/internal/cache"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
 
@@ -19,9 +20,22 @@ type PageData struct {
 	Error       string
 }
 
-func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
+func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		originalURL := r.FormValue("original_url")
+
+		cacheEntry, exists := urlCache.GetEntry(originalURL)
+		if exists {
+			data := PageData{
+				OriginalURL: originalURL,
+				ShortURL:    cacheEntry.ShortURL,
+			}
+			err := tmpl.Execute(w, data)
+			if err != nil {
+				log.Printf("Error executing template: %v", err)
+			}
+			return
+		}
 
 		var url shortener.URL
 		url.OriginalURL = originalURL
@@ -38,6 +52,8 @@ func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 			}
 		}
 
+		urlCache.AddEntry(url.OriginalURL, url.ShortCode)
+
 		data := PageData{
 			OriginalURL: url.OriginalURL,
 			ShortURL:    r.Host + "/" + url.ShortCode,
@@ -50,10 +66,19 @@ func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 	}
 }
 
-func RedirectHandler(db storage.Storage) http.HandlerFunc {
+func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		shortCode := vars["shortCode"]
+
+		cacheEntry, exists := urlCache.GetEntry(shortCode)
+		if exists {
+			cacheEntry.Count++
+			urlCache.AddEntry(cacheEntry.OriginalURL, cacheEntry.ShortURL)
+
+			http.Redirect(w, r, cacheEntry.OriginalURL, http.StatusFound)
+			return
+		}
 
 		originalURL, err := db.GetURL(shortCode)
 		if err != nil {
@@ -63,15 +88,17 @@ func RedirectHandler(db storage.Storage) http.HandlerFunc {
 
 		err = db.IncrementClickCount(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating click count", http.StatusInternalServerError)
+			http.Error(w, "Error update click count", http.StatusInternalServerError)
 			return
 		}
 
 		err = db.UpdateLastAccessed(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating last accessed time", http.StatusInternalServerError)
+			http.Error(w, "Error updating last accesseded time", http.StatusInternalServerError)
 			return
 		}
+
+		urlCache.AddEntry(originalURL, shortCode)
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
@@ -80,7 +107,7 @@ func RedirectHandler(db storage.Storage) http.HandlerFunc {
 func WebInterfaceHandler(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			CreateShortURLHandler(db)(w, r)
+			CreateShortURLHandler(db, nil)(w, r)
 			return
 		}
 		err := tmpl.Execute(w, PageData{})
