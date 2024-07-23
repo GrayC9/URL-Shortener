@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -32,6 +33,32 @@ func main() {
 	r.HandleFunc("/api/shorten", handlers.CreateShortURLHandler(db, urlCache)).Methods("POST")
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db, urlCache)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db)).Methods("GET", "POST")
+	// проверка
+	fmt.Println("Получение записей из кэша...")
+	entry, exists := urlCache.GetEntry("short1")
+	if exists {
+		fmt.Printf("Запись найдена для short1: %+v\n", entry)
+	} else {
+		fmt.Println("Запись не найдена для short1")
+	}
+
+	entry, exists = urlCache.GetEntry("short2")
+	if exists {
+		fmt.Printf("Запись найдена для short2: %+v\n", entry)
+	} else {
+		fmt.Println("Запись не найдена для short2")
+	}
+
+	fmt.Println("Удаление записи short2 из кэша...")
+	urlCache.DeleteEntry("short2")
+	entry, exists = urlCache.GetEntry("short2")
+	if exists {
+		fmt.Printf("Запись все еще существует для short2: %+v\n", entry)
+	} else {
+		fmt.Println("Запись успешно удалена для short2")
+	}
+	// проверка
+
 	r.HandleFunc("/register", auth.SignUp(db)).Methods("POST")
 	r.HandleFunc("/login", auth.AuthMiddleware((auth.Login(db)))).Methods("POST")
 
