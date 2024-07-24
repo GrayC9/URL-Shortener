@@ -26,13 +26,11 @@ func (c *URLCache) AddEntry(originalURL, shortURL string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if entry, ok := c.cache[shortURL]; ok {
-		entry.Count++
-	} else {
+	if _, ok := c.cache[shortURL]; !ok {
 		c.cache[shortURL] = &CacheEntry{
 			OriginalURL: originalURL,
 			ShortURL:    shortURL,
-			Count:       1,
+			Count:       0, // Изначально счетчик 0
 		}
 	}
 }
@@ -43,6 +41,17 @@ func (c *URLCache) GetEntry(shortURL string) (*CacheEntry, bool) {
 
 	entry, ok := c.cache[shortURL]
 	return entry, ok
+}
+
+func (c *URLCache) IncrementCount(shortURL string) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if entry, ok := c.cache[shortURL]; ok {
+		entry.Count++
+		return true
+	}
+	return false
 }
 
 func (c *URLCache) DeleteEntry(shortURL string) {

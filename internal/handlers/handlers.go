@@ -2,14 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"net/http"
 	"url_shortener/internal/cache"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
-
-	"github.com/gorilla/mux"
 )
 
 var tmpl = template.Must(template.ParseFiles("internal/web/index.html"))
@@ -71,11 +70,8 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 		vars := mux.Vars(r)
 		shortCode := vars["shortCode"]
 
-		cacheEntry, exists := urlCache.GetEntry(shortCode)
-		if exists {
-			cacheEntry.Count++
-			urlCache.AddEntry(cacheEntry.OriginalURL, cacheEntry.ShortURL)
-
+		if cacheEntry, ok := urlCache.GetEntry(shortCode); ok {
+			urlCache.IncrementCount(shortCode)
 			http.Redirect(w, r, cacheEntry.OriginalURL, http.StatusFound)
 			return
 		}
@@ -88,17 +84,18 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 
 		err = db.IncrementClickCount(shortCode)
 		if err != nil {
-			http.Error(w, "Error update click count", http.StatusInternalServerError)
+			http.Error(w, "Error updating click count", http.StatusInternalServerError)
 			return
 		}
 
 		err = db.UpdateLastAccessed(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating last accesseded time", http.StatusInternalServerError)
+			http.Error(w, "Error updating last accessed time", http.StatusInternalServerError)
 			return
 		}
 
 		urlCache.AddEntry(originalURL, shortCode)
+		urlCache.IncrementCount(shortCode) // Увеличиваем счетчик при редиректе
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
