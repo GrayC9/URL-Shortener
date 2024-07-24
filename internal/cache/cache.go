@@ -26,7 +26,7 @@ func (c *URLCache) AddEntry(originalURL, shortURL string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if entry, exists := c.cache[shortURL]; exists {
+	if entry, ok := c.cache[shortURL]; ok {
 		entry.Count++
 	} else {
 		c.cache[shortURL] = &CacheEntry{
@@ -41,8 +41,8 @@ func (c *URLCache) GetEntry(shortURL string) (*CacheEntry, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	entry, exists := c.cache[shortURL]
-	return entry, exists
+	entry, ok := c.cache[shortURL]
+	return entry, ok
 }
 
 func (c *URLCache) DeleteEntry(shortURL string) {

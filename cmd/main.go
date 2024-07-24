@@ -58,7 +58,6 @@ func main() {
 		fmt.Println("Запись успешно удалена для short2")
 	}
 	// проверка
-
 	r.HandleFunc("/register", auth.SignUp(db)).Methods("POST")
 	r.HandleFunc("/login", auth.AuthMiddleware((auth.Login(db)))).Methods("POST")
 
