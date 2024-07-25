@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"net/http"
+	"url_shortener/internal/cache"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
-
-	"github.com/gorilla/mux"
 )
 
 var tmpl = template.Must(template.ParseFiles("internal/web/index.html"))
@@ -19,9 +19,22 @@ type PageData struct {
 	Error       string
 }
 
-func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
+func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		originalURL := r.FormValue("original_url")
+
+		cacheEntry, exists := urlCache.GetEntry(originalURL)
+		if exists {
+			data := PageData{
+				OriginalURL: originalURL,
+				ShortURL:    r.Host + "/" + cacheEntry.ShortURL,
+			}
+			err := tmpl.Execute(w, data)
+			if err != nil {
+				log.Printf("Ошибка при выполнении шаблона: %v", err)
+			}
+			return
+		}
 
 		var url shortener.URL
 		url.OriginalURL = originalURL
@@ -33,10 +46,12 @@ func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 			url.ShortCode = shortener.GenerateShortCode()
 			err = db.SaveURL(url.ShortCode, url.OriginalURL)
 			if err != nil {
-				http.Error(w, "Error saving URL", http.StatusInternalServerError)
+				http.Error(w, "Ошибка при сохранении URL", http.StatusInternalServerError)
 				return
 			}
 		}
+
+		urlCache.AddEntry(url.OriginalURL, url.ShortCode)
 
 		data := PageData{
 			OriginalURL: url.OriginalURL,
@@ -45,15 +60,21 @@ func CreateShortURLHandler(db storage.Storage) http.HandlerFunc {
 
 		err = tmpl.Execute(w, data)
 		if err != nil {
-			log.Printf("Error executing template: %v", err)
+			log.Printf("Ошибка при выполнении шаблона: %v", err)
 		}
 	}
 }
 
-func RedirectHandler(db storage.Storage) http.HandlerFunc {
+func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		shortCode := vars["shortCode"]
+
+		if cacheEntry, ok := urlCache.GetEntry(shortCode); ok {
+			urlCache.IncrementCount(shortCode)
+			http.Redirect(w, r, cacheEntry.OriginalURL, http.StatusFound)
+			return
+		}
 
 		originalURL, err := db.GetURL(shortCode)
 		if err != nil {
@@ -63,29 +84,32 @@ func RedirectHandler(db storage.Storage) http.HandlerFunc {
 
 		err = db.IncrementClickCount(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating click count", http.StatusInternalServerError)
+			http.Error(w, "Ошибка при обновлении счетчика кликов", http.StatusInternalServerError)
 			return
 		}
 
 		err = db.UpdateLastAccessed(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating last accessed time", http.StatusInternalServerError)
+			http.Error(w, "Ошибка при обновлении времени последнего доступа", http.StatusInternalServerError)
 			return
 		}
+
+		urlCache.AddEntry(originalURL, shortCode)
+		urlCache.IncrementCount(shortCode)
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
 }
 
-func WebInterfaceHandler(db storage.Storage) http.HandlerFunc {
+func WebInterfaceHandler(db storage.Storage, c *cache.URLCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			CreateShortURLHandler(db)(w, r)
+			CreateShortURLHandler(db, c)(w, r)
 			return
 		}
 		err := tmpl.Execute(w, PageData{})
 		if err != nil {
-			log.Printf("Error executing template: %v", err)
+			log.Printf("Ошибка при выполнении шаблона: %v", err)
 		}
 	}
 }
