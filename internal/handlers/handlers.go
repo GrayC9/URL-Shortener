@@ -31,7 +31,7 @@ func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.Ha
 			}
 			err := tmpl.Execute(w, data)
 			if err != nil {
-				log.Printf("Error executing template: %v", err)
+				log.Printf("Ошибка при выполнении шаблона: %v", err)
 			}
 			return
 		}
@@ -46,7 +46,7 @@ func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.Ha
 			url.ShortCode = shortener.GenerateShortCode()
 			err = db.SaveURL(url.ShortCode, url.OriginalURL)
 			if err != nil {
-				http.Error(w, "Error saving URL", http.StatusInternalServerError)
+				http.Error(w, "Ошибка при сохранении URL", http.StatusInternalServerError)
 				return
 			}
 		}
@@ -60,7 +60,7 @@ func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.Ha
 
 		err = tmpl.Execute(w, data)
 		if err != nil {
-			log.Printf("Error executing template: %v", err)
+			log.Printf("Ошибка при выполнении шаблона: %v", err)
 		}
 	}
 }
@@ -84,13 +84,13 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 
 		err = db.IncrementClickCount(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating click count", http.StatusInternalServerError)
+			http.Error(w, "Ошибка при обновлении счетчика кликов", http.StatusInternalServerError)
 			return
 		}
 
 		err = db.UpdateLastAccessed(shortCode)
 		if err != nil {
-			http.Error(w, "Error updating last accessed time", http.StatusInternalServerError)
+			http.Error(w, "Ошибка при обновлении времени последнего доступа", http.StatusInternalServerError)
 			return
 		}
 
@@ -109,7 +109,7 @@ func WebInterfaceHandler(db storage.Storage, c *cache.URLCache) http.HandlerFunc
 		}
 		err := tmpl.Execute(w, PageData{})
 		if err != nil {
-			log.Printf("Error executing template: %v", err)
+			log.Printf("Ошибка при выполнении шаблона: %v", err)
 		}
 	}
 }
