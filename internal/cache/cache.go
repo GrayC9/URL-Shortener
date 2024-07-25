@@ -30,7 +30,7 @@ func (c *URLCache) AddEntry(originalURL, shortURL string) {
 		c.cache[shortURL] = &CacheEntry{
 			OriginalURL: originalURL,
 			ShortURL:    shortURL,
-			Count:       0, // Изначально счетчик 0
+			Count:       0,
 		}
 	}
 }

@@ -95,7 +95,7 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 		}
 
 		urlCache.AddEntry(originalURL, shortCode)
-		urlCache.IncrementCount(shortCode) // Увеличиваем счетчик при редиректе
+		urlCache.IncrementCount(shortCode)
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
