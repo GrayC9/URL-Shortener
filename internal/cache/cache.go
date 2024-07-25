@@ -26,8 +26,8 @@ func (c *URLCache) AddEntry(originalURL, shortURL string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.cache[shortURL]; !ok {
-		c.cache[shortURL] = &CacheEntry{
+	if _, ok := c.cache[originalURL]; !ok {
+		c.cache[originalURL] = &CacheEntry{
 			OriginalURL: originalURL,
 			ShortURL:    shortURL,
 			Count:       0,
@@ -35,11 +35,11 @@ func (c *URLCache) AddEntry(originalURL, shortURL string) {
 	}
 }
 
-func (c *URLCache) GetEntry(shortURL string) (*CacheEntry, bool) {
+func (c *URLCache) GetEntry(originalURL string) (*CacheEntry, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	entry, ok := c.cache[shortURL]
+	entry, ok := c.cache[originalURL]
 	return entry, ok
 }
 
@@ -54,11 +54,11 @@ func (c *URLCache) IncrementCount(shortURL string) bool {
 	return false
 }
 
-func (c *URLCache) DeleteEntry(shortURL string) {
+func (c *URLCache) DeleteEntry(originalURL string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	delete(c.cache, shortURL)
+	delete(c.cache, originalURL)
 }
 
 func (c *URLCache) GetMostPopular(limit int) []*CacheEntry {

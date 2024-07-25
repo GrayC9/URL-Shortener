@@ -27,7 +27,7 @@ func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.Ha
 		if exists {
 			data := PageData{
 				OriginalURL: originalURL,
-				ShortURL:    cacheEntry.ShortURL,
+				ShortURL:    r.Host + "/" + cacheEntry.ShortURL,
 			}
 			err := tmpl.Execute(w, data)
 			if err != nil {
@@ -101,10 +101,10 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 	}
 }
 
-func WebInterfaceHandler(db storage.Storage) http.HandlerFunc {
+func WebInterfaceHandler(db storage.Storage, c *cache.URLCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			CreateShortURLHandler(db, nil)(w, r)
+			CreateShortURLHandler(db, c)(w, r)
 			return
 		}
 		err := tmpl.Execute(w, PageData{})
