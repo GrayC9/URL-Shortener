@@ -11,7 +11,7 @@ import (
 	"url_shortener/internal/storage"
 )
 
-var tmpl = template.Must(template.ParseFiles("internal/web/index.html"))
+var tmpl = template.Must(template.ParseFiles("../../internal/web/index.html"))
 
 type PageData struct {
 	OriginalURL string
