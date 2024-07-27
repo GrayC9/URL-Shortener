@@ -1,47 +1,46 @@
 package tests
 
 import (
-	"embed"
-	"github.com/gorilla/mux"
-	"io/fs"
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
-	"url_shortener/internal/cache"
 	"url_shortener/internal/handlers"
+
+	"github.com/gorilla/mux"
+	"url_shortener/internal/cache"
 	"url_shortener/internal/storage"
 )
 
-//go:embed values.txt
-var valuesFile embed.FS
+const valuesFile = "values.txt"
 
-func loadURLs(file embed.FS, filePath string) ([]string, error) {
-	data, err := fs.ReadFile(file, filePath)
+func loadURLs(filePath string) ([]string, error) {
+	file, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(data), "\n")
+	lines := bytes.Split(file, []byte("\n"))
 	urls := make([]string, 0, len(lines))
 	for _, line := range lines {
 		if len(line) > 0 {
-			urls = append(urls, line)
+			urls = append(urls, string(line))
 		}
 	}
 	return urls, nil
 }
 
 func TestShorteningPerformance(t *testing.T) {
-	urls, err := loadURLs(valuesFile, "values.txt")
+	urls, err := loadURLs(valuesFile)
 	if err != nil {
 		t.Fatalf("Failed load URLs from file: %v", err)
 	}
 
-	db, err := storage.NewMariaDBStorage("секретка")
+	db, err := storage.NewMariaDBStorage("root:jbfjkerbg12A21@tcp(r1.gl.fconn.ru:3306)/urlsh")
 	if err != nil {
-		t.Fatalf("Failed to create storage: %v", err)
+		t.Fatalf("Failed to create st: %v", err)
 	}
 	urlCache := cache.NewURLCache()
 
@@ -54,7 +53,7 @@ func TestShorteningPerformance(t *testing.T) {
 		start := time.Now()
 		resp, err := http.PostForm(server.URL+"/", url.Values{"original_url": {originalURL}})
 		if err != nil {
-			t.Fatalf("Failed to shorten URL: %v", err)
+			t.Fatalf("Failed shorten URL: %v", err)
 		}
 		resp.Body.Close()
 		firstDuration := time.Since(start)

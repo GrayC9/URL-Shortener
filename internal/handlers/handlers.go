@@ -11,10 +11,7 @@ import (
 	"url_shortener/internal/storage"
 )
 
-//go:embed web/index.html
-var indexHTML string
-
-var tmpl = template.Must(template.New("index").Parse(indexHTML))
+var tmpl = template.Must(template.ParseFiles("../../internal/web/index.html"))
 
 type PageData struct {
 	OriginalURL string
