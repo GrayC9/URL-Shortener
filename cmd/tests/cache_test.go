@@ -2,20 +2,21 @@ package tests
 
 import (
 	"bytes"
+	"embed"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
-	"url_shortener/internal/handlers"
-
-	"github.com/gorilla/mux"
 	"url_shortener/internal/cache"
+	"url_shortener/internal/handlers"
 	"url_shortener/internal/storage"
 )
 
-const valuesFile = "tests/values.txt"
+//go:embed values.txt
+var valuesFile embed.FS
 
 func loadURLs(filePath string) ([]string, error) {
 	file, err := ioutil.ReadFile(filePath)
@@ -50,7 +51,6 @@ func TestShorteningPerformance(t *testing.T) {
 	defer server.Close()
 
 	for _, originalURL := range urls {
-		// First request to shorten URL
 		start := time.Now()
 		resp, err := http.PostForm(server.URL+"/", url.Values{"original_url": {originalURL}})
 		if err != nil {
@@ -59,7 +59,6 @@ func TestShorteningPerformance(t *testing.T) {
 		resp.Body.Close()
 		firstDuration := time.Since(start)
 
-		// Second request to shorten the same URL
 		start = time.Now()
 		resp, err = http.PostForm(server.URL+"/", url.Values{"original_url": {originalURL}})
 		if err != nil {
