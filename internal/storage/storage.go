@@ -9,12 +9,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type URL struct {
+	OriginalURL    string    `json:"original_url"`
+	ShortCode      string    `json:"short_code"`
+	LastAccessedAt time.Time `json:"last_accessed_at"`
+}
+
 type Storage interface {
 	SaveURL(shortCode, originalURL string) error
 	GetURL(shortCode string) (string, error)
 	GetShortCode(originalURL string) (string, error)
 	IncrementClickCount(shortCode string) error
 	UpdateLastAccessed(shortCode string) error
+	GetPopularURLs(limit int) ([]URL, error)
 	CreateUser(string, string) error
 	EnterUser(string, string) (int, error)
 }
@@ -90,6 +97,28 @@ func (m *MariaDBStorage) CreateUser(name, hash_password string) error {
 		return err
 	}
 	return nil
+}
+
+func (m *MariaDBStorage) GetPopularURLs(limit int) ([]URL, error) {
+	rows, err := m.db.Query("SELECT original_url, short_code FROM urls ORDER BY click_count DESC LIMIT ?", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []URL
+	for rows.Next() {
+		var url URL
+		if err := rows.Scan(&url.OriginalURL, &url.ShortCode); err != nil {
+			return nil, err
+		}
+		urls = append(urls, url)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return urls, nil
 }
 
 func (m *MariaDBStorage) EnterUser(name, pass string) (int, error) {
