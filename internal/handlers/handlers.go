@@ -6,12 +6,14 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 	"url_shortener/internal/cache"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
 )
 
-var tmpl = template.Must(template.ParseFiles("../../internal/web/index.html"))
+// var tmpl = template.Must(template.ParseFiles("../internal/web/index.html"))
+var tmpl = template.Must(template.ParseFiles(filepath.Join("internal", "web", "index.html")))
 
 type PageData struct {
 	OriginalURL string
