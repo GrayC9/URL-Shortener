@@ -51,7 +51,7 @@ func CreateShortURLHandler(db storage.Storage, urlCache *cache.URLCache) http.Ha
 			}
 		}
 
-		urlCache.AddEntry(url.OriginalURL, url.ShortCode)
+		go urlCache.AddEntry(url.OriginalURL, url.ShortCode)
 
 		data := PageData{
 			OriginalURL: url.OriginalURL,
@@ -94,7 +94,7 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 			return
 		}
 
-		urlCache.AddEntry(originalURL, shortCode)
+		go urlCache.AddEntry(originalURL, shortCode)
 		urlCache.IncrementCount(shortCode)
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
