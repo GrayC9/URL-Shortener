@@ -1,4 +1,4 @@
-package tests
+package cache
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"url_shortener/internal/handlers"
 
 	"github.com/gorilla/mux"
-	"url_shortener/internal/cache"
 	"url_shortener/internal/storage"
 )
 
@@ -42,7 +41,7 @@ func TestShorteningPerformance(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create st: %v", err)
 	}
-	urlCache := cache.NewURLCache()
+	urlCache := NewURLCache()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db, urlCache)).Methods("GET", "POST")
