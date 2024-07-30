@@ -1,9 +1,13 @@
 package cache
 
 import (
+	"log"
 	"sort"
 	"sync"
+	"url_shortener/internal/storage"
 )
+
+const popularURLLimit = 1000
 
 type URLCache struct {
 	mu    sync.RWMutex
@@ -78,4 +82,17 @@ func (c *URLCache) GetMostPopular(limit int) []*CacheEntry {
 		limit = len(entries)
 	}
 	return entries[:limit]
+}
+
+func PreloadCache(db storage.Storage, urlCache *URLCache) {
+	popularURLs, err := db.GetPopularURLs(popularURLLimit)
+	if err != nil {
+		log.Printf("Ошибка при получении популярных URL: %v", err)
+		return
+	}
+
+	for _, url := range popularURLs {
+		urlCache.AddEntry(url.OriginalURL, url.ShortCode)
+		log.Printf("URL добавлен в кеш: %s -> %s", url.ShortCode, url.OriginalURL)
+	}
 }
