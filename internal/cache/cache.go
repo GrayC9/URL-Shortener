@@ -1,9 +1,14 @@
 package cache
 
+import "C"
 import (
+	"log"
 	"sort"
 	"sync"
+	"url_shortener/internal/storage"
 )
+
+const popularURLLimit = 1000
 
 type URLCache struct {
 	mu    sync.RWMutex
@@ -23,15 +28,20 @@ func NewURLCache() *URLCache {
 }
 
 func (c *URLCache) AddEntry(originalURL, shortURL string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	var cacheNew = &CacheEntry{
+		OriginalURL: originalURL,
+		ShortURL:    shortURL,
+		Count:       0,
+	}
 
-	if _, ok := c.cache[originalURL]; !ok {
-		c.cache[originalURL] = &CacheEntry{
-			OriginalURL: originalURL,
-			ShortURL:    shortURL,
-			Count:       0,
-		}
+	c.mu.RLock()
+	_, ok := c.cache[originalURL]
+	c.mu.RUnlock()
+
+	if !ok {
+		c.mu.Lock()
+		c.cache[originalURL] = cacheNew
+		c.mu.Unlock()
 	}
 }
 
@@ -43,11 +53,11 @@ func (c *URLCache) GetEntry(originalURL string) (*CacheEntry, bool) {
 	return entry, ok
 }
 
-func (c *URLCache) IncrementCount(shortURL string) bool {
+func (c *URLCache) IncrementCount(originalURL string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if entry, ok := c.cache[shortURL]; ok {
+	if entry, ok := c.cache[originalURL]; ok {
 		entry.Count++
 		return true
 	}
@@ -78,4 +88,17 @@ func (c *URLCache) GetMostPopular(limit int) []*CacheEntry {
 		limit = len(entries)
 	}
 	return entries[:limit]
+}
+
+func PreloadCache(db storage.Storage, urlCache *URLCache) {
+	popularURLs, err := db.GetPopularURLs(popularURLLimit)
+	if err != nil {
+		log.Printf("Ошибка при получении популярных URL: %v", err)
+		return
+	}
+
+	for _, url := range popularURLs {
+		urlCache.AddEntry(url.OriginalURL, url.ShortCode)
+		log.Printf("URL добавлен в кеш: %s -> %s", url.ShortCode, url.OriginalURL)
+	}
 }
