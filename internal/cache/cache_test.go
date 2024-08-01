@@ -1,4 +1,5 @@
-//package cache
+package cache
+
 //
 //import (
 //	"bytes"
