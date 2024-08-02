@@ -25,6 +25,7 @@ func main() {
 		})
 	}
 
+
 	urlCache := cache.NewURLCache(1000)
 	cache.PreloadCache(db, urlCache)
 
