@@ -1,18 +1,18 @@
 package cache
 
 import (
-	"container/list"
 	"log"
 	"sort"
 	"sync"
 	"url_shortener/internal/storage"
 )
 
+const defaultPopularURLLimit = 1000
+
 type URLCache struct {
-	mu       sync.Mutex
-	cache    map[string]*list.Element
-	lru      *list.List
-	capacity int
+	mu    sync.RWMutex
+	cache map[string]*CacheEntry
+	limit int
 }
 
 type CacheEntry struct {
@@ -21,16 +21,13 @@ type CacheEntry struct {
 	Count       int
 }
 
-type entry struct {
-	key   string
-	value *CacheEntry
-}
-
-func NewURLCache(capacity int) *URLCache {
+func NewURLCache(limit int) *URLCache {
+	if limit <= 0 {
+		limit = defaultPopularURLLimit
+	}
 	return &URLCache{
-		cache:    make(map[string]*list.Element),
-		lru:      list.New(),
-		capacity: capacity,
+		cache: make(map[string]*CacheEntry),
+		limit: limit,
 	}
 }
 
@@ -38,43 +35,31 @@ func (c *URLCache) AddEntry(originalURL, shortURL string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if elem, ok := c.cache[originalURL]; ok {
-		c.lru.MoveToFront(elem)
-		return
+	if len(c.cache) >= c.limit {
+		c.evict()
 	}
 
-	newEntry := &CacheEntry{
+	c.cache[originalURL] = &CacheEntry{
 		OriginalURL: originalURL,
 		ShortURL:    shortURL,
 		Count:       0,
 	}
-
-	elem := c.lru.PushFront(&entry{key: originalURL, value: newEntry})
-	c.cache[originalURL] = elem
-
-	if c.lru.Len() > c.capacity {
-		c.removeOldest()
-	}
 }
 
 func (c *URLCache) GetEntry(originalURL string) (*CacheEntry, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
-	if elem, ok := c.cache[originalURL]; ok {
-		c.lru.MoveToFront(elem)
-		return elem.Value.(*entry).value, true
-	}
-	return nil, false
+	entry, ok := c.cache[originalURL]
+	return entry, ok
 }
 
 func (c *URLCache) IncrementCount(originalURL string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if elem, ok := c.cache[originalURL]; ok {
-		elem.Value.(*entry).value.Count++
-		c.lru.MoveToFront(elem)
+	if entry, ok := c.cache[originalURL]; ok {
+		entry.Count++
 		return true
 	}
 	return false
@@ -84,18 +69,16 @@ func (c *URLCache) DeleteEntry(originalURL string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if elem, ok := c.cache[originalURL]; ok {
-		c.removeElement(elem)
-	}
+	delete(c.cache, originalURL)
 }
 
 func (c *URLCache) GetMostPopular(limit int) []*CacheEntry {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
 	entries := make([]*CacheEntry, 0, len(c.cache))
-	for _, elem := range c.cache {
-		entries = append(entries, elem.Value.(*entry).value)
+	for _, entry := range c.cache {
+		entries = append(entries, entry)
 	}
 
 	sort.Slice(entries, func(i, j int) bool {
@@ -108,19 +91,25 @@ func (c *URLCache) GetMostPopular(limit int) []*CacheEntry {
 	return entries[:limit]
 }
 
-func (c *URLCache) removeOldest() {
-	if elem := c.lru.Back(); elem != nil {
-		c.removeElement(elem)
+func (c *URLCache) evict() {
+	if len(c.cache) == 0 {
+		return
 	}
-}
 
-func (c *URLCache) removeElement(elem *list.Element) {
-	c.lru.Remove(elem)
-	delete(c.cache, elem.Value.(*entry).key)
+	var minKey string
+	var minCount int = -1
+	for k, v := range c.cache {
+		if minCount == -1 || v.Count < minCount {
+			minCount = v.Count
+			minKey = k
+		}
+	}
+
+	delete(c.cache, minKey)
 }
 
 func PreloadCache(db storage.Storage, urlCache *URLCache) {
-	popularURLs, err := db.GetPopularURLs(urlCache.capacity)
+	popularURLs, err := db.GetPopularURLs(defaultPopularURLLimit)
 	if err != nil {
 		log.Printf("Ошибка при получении популярных URL: %v", err)
 		return

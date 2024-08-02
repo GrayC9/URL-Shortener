@@ -18,7 +18,6 @@ func main() {
 	auth.JWTSecretKey = []byte(cfg.Server.JWTSecret)
 
 	r := mux.NewRouter()
-
 	db, err := storage.NewMariaDBStorage(cfg.DB.DSN)
 	if err != nil {
 		r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +29,6 @@ func main() {
 	cache.PreloadCache(db, urlCache)
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./internal/web"))))
-
 	r.HandleFunc("/{shortCode}", handlers.RedirectHandler(db, urlCache)).Methods("GET")
 	r.HandleFunc("/", handlers.WebInterfaceHandler(db, urlCache)).Methods("GET", "POST")
 
