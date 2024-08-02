@@ -1,5 +1,6 @@
 package cache
 
+import "C"
 import (
 	"container/list"
 	"log"
@@ -7,6 +8,8 @@ import (
 	"sync"
 	"url_shortener/internal/storage"
 )
+
+const popularURLLimit = 1000
 
 type URLCache struct {
 	mu       sync.Mutex
@@ -35,8 +38,15 @@ func NewURLCache(capacity int) *URLCache {
 }
 
 func (c *URLCache) AddEntry(originalURL, shortURL string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	var cacheNew = &CacheEntry{
+		OriginalURL: originalURL,
+		ShortURL:    shortURL,
+		Count:       0,
+	}
+
+	c.mu.RLock()
+	_, ok := c.cache[originalURL]
+	c.mu.RUnlock()
 
 	if elem, ok := c.cache[originalURL]; ok {
 		c.lru.MoveToFront(elem)
@@ -75,6 +85,7 @@ func (c *URLCache) IncrementCount(originalURL string) bool {
 	if elem, ok := c.cache[originalURL]; ok {
 		elem.Value.(*entry).value.Count++
 		c.lru.MoveToFront(elem)
+
 		return true
 	}
 	return false
@@ -108,6 +119,7 @@ func (c *URLCache) GetMostPopular(limit int) []*CacheEntry {
 	return entries[:limit]
 }
 
+
 func (c *URLCache) removeOldest() {
 	if elem := c.lru.Back(); elem != nil {
 		c.removeElement(elem)
@@ -121,6 +133,7 @@ func (c *URLCache) removeElement(elem *list.Element) {
 
 func PreloadCache(db storage.Storage, urlCache *URLCache) {
 	popularURLs, err := db.GetPopularURLs(urlCache.capacity)
+
 	if err != nil {
 		log.Printf("Ошибка при получении популярных URL: %v", err)
 		return
