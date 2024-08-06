@@ -25,7 +25,8 @@ func main() {
 		})
 	}
 
-	urlCache := cache.NewURLCache()
+
+	urlCache := cache.NewURLCache(1000)
 	cache.PreloadCache(db, urlCache)
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./internal/web"))))
