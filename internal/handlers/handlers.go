@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"url_shortener/internal/cache"
 	"url_shortener/internal/shortener"
 	"url_shortener/internal/storage"
@@ -98,6 +99,10 @@ func RedirectHandler(db storage.Storage, urlCache *cache.URLCache) http.HandlerF
 
 		go urlCache.AddEntry(originalURL, shortCode)
 		urlCache.IncrementCount(shortCode)
+
+		if !strings.HasPrefix(originalURL, "http") {
+			originalURL = "http://" + originalURL
+		}
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
