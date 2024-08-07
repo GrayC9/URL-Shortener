@@ -4,6 +4,7 @@
 
 <h3 align="left" style="font-size: 1.5em;"> Description of how my URL shortening service works with authentication </h3>
 <h3>You can get acquainted with the project at the link:</h3>
+
 ```shell
 http://s.fconn.ru/
 ```
