@@ -26,10 +26,10 @@ With each request, the cache is first checked, and only if there is no data in t
 The URL shortening service implements caching to improve performance and speed up request processing. Caching is used to store popular URLs and their abbreviations in RAM, thereby avoiding frequent database calls. Key aspects of caching include warming up the cache, limiting its size, and using the LRU (Least Recently Used) strategy.
 
 
-<h3 align="left" style="font-size: 1.5em;">Here is the work of the cache and its interaction with the database: <h3>
+Here is the work of the cache and its interaction with the database: 
 ![image](https://github.com/user-attachments/assets/d1ef5ab0-b962-4cdf-b64c-000fcc29cd81)
 
-<h3 align="left" style="font-size: 1.5em;">Using the LRU Strategy:<h3>
+Using the LRU Strategy:
 The LRU (Least Recently Used) caching strategy is used to manage cache contents. This strategy ensures that the least recently used items are removed when new data is added, allowing for efficient use of limited cache space.
 
 Maintain usage order: The cache keeps track of the last time each item was used. This allows you to track which items have been used recently and which have not.
@@ -40,7 +40,7 @@ How LRU cache works:
 ![image](https://github.com/user-attachments/assets/edc65c19-46e2-42f2-93b5-09e702269073)
 
 
-<h3 align="left" style="font-size: 1.5em;">Deploying the application to the server:<h3>
+Deploying the application to the server:
 
 To deploy the application, you need to run my Docker container on your server.
 
@@ -48,7 +48,7 @@ docker run -d -p 8943:8080 --env DB_DSN="user:password@tcp(db_host:db_port)/db_n
 
 You need to pick up your database and create the following tables in it:
 
-<h3 align="left" style="font-size: 1.5em;">Table<h3>
+Table
 
 ```shell
 CREATE DATABASE IF NOT EXISTS urlsh;
@@ -74,7 +74,7 @@ CREATE TABLE users (
 
 </p>
 
-<h3 align="left" style="font-size: 1.5em;">Configuration<h3>
+<h3>Configuration<h3>
 
 ```shell
 export DB_DSN="user:password@tcp(db_host:db_port)/db_name"
