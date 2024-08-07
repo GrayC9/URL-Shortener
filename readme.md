@@ -3,6 +3,11 @@
 <h3 align="center"> Welcome to the URL shortening service documentation. I created a REST API that shortens URLs.</h3>
 
 <h3 align="left" style="font-size: 1.5em;"> Description of how my URL shortening service works with authentication </h3>
+<h3>You can get acquainted with the project at the link:</h3>
+```shell
+http://s.fconn.ru/
+```
+
 <p align="left">URL shortening:
 
 The first time a user shortens a link, a new entry is created in the database that includes the original URL (original_url) and the generated short URL (short_url).
