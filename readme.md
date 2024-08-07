@@ -27,28 +27,33 @@ The URL shortening service implements caching to improve performance and speed u
 
 
 Here is the work of the cache and its interaction with the database: 
+</p>
 ![image](https://github.com/user-attachments/assets/d1ef5ab0-b962-4cdf-b64c-000fcc29cd81)
 
-Using the LRU Strategy:
+<h3 align="left" style="font-size: 1.5em;">Using the LRU Strategy:</h3>
+<p>
 The LRU (Least Recently Used) caching strategy is used to manage cache contents. This strategy ensures that the least recently used items are removed when new data is added, allowing for efficient use of limited cache space.
 
 Maintain usage order: The cache keeps track of the last time each item was used. This allows you to track which items have been used recently and which have not.
 Removing old items: When it is necessary to make room for a new item, the cache removes the least recently used item, that is, the one that was used the longest ago.
+</p>
 
-How LRU cache works:
+<h3 align="left" style="font-size: 1.5em;">How LRU cache works:</h3>
 
 ![image](https://github.com/user-attachments/assets/edc65c19-46e2-42f2-93b5-09e702269073)
 
 
-Deploying the application to the server:
+<h3 align="left" style="font-size: 1.5em;">Deploying the application to the server:</h3>
 
 To deploy the application, you need to run my Docker container on your server.
 
+```shell
 docker run -d -p 8943:8080 --env DB_DSN="user:password@tcp(db_host:db_port)/db_name" grayc9/shortener:1722964983
+```
 
 You need to pick up your database and create the following tables in it:
 
-Table
+<h3 align="left" style="font-size: 1.5em;">Table</h3>
 
 ```shell
 CREATE DATABASE IF NOT EXISTS urlsh;
@@ -72,9 +77,9 @@ CREATE TABLE users (
 );  "
 ```
 
-</p>
 
-<h3>Configuration<h3>
+
+<h3>Configuration</h3>
 
 ```shell
 export DB_DSN="user:password@tcp(db_host:db_port)/db_name"
