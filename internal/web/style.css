@@ -13,6 +13,7 @@ body {
     padding: 2em;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+    width: 700px;
 }
 
 form {
@@ -46,6 +47,23 @@ button:hover {
 }
 
 #short-url {
-    margin-top: 1em;
-    font-size: 1.2em;
+    font-size: 3em;
+    margin-bottom: 30px;
+}
+
+#short-url a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.container p {
+    margin-bottom: -20px;
+}
+.container p a:visited {
+    color: #007bff;
+}
+
+.container p a {
+    text-decoration: none;
+    color: #007bff;
 }

@@ -8,27 +8,19 @@
 </head>
 <body>
 <div class="container">
-    <h1>URL Shortener</h1>
     {{if .Error}}
     <div class="error">{{.Error}}</div>
     {{end}}
-    <form method="POST" action="/login">
-        <input type="text" name="username" placeholder="username" required>
-        <input type="password" name="password" placeholder="password" required>
-        <button type="submit">Login</button>
-    </form>
-    <form method="POST" action="/register">
-        <input type="text" name="username" placeholder="username" required>
-        <input type="password" name="password" placeholder="password" required>
-        <button type="submit">Register</button>
-    </form>
+    {{if .ShortURL}}
+    <div id="short-url"><a href="http://{{.ShortURL}}">{{.ShortURL}}</a></div>
+    {{end}}
     <form method="POST" action="/">
-        <input type="text" name="original_url" placeholder="Enter original URL" required>
+        <input type="text" name="original_url" placeholder="Enter original URL" required autofocus>
         <button type="submit">Shorten</button>
     </form>
-    {{if .ShortURL}}
-    <div id="short-url">Short URL: <a href="http://{{.ShortURL}}">{{.ShortURL}}</a></div>
-    {{end}}
+    <p align="center">
+        <a target="_blank" href="https://github.com/GrayC9/URL-Shortener">Github</a>
+    </p>
 </div>
 </body>
 </html>
